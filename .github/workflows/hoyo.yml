@@ -14,7 +14,6 @@ jobs:
           COOKIES: ${{ secrets.COOKIES }}
         run: |
           echo "$COOKIES" | jq -r '.[]' | while read -r cookie; do
-            echo "--- Signing for account ---"
             response=$(curl -s \
               -X POST \
               'https://sg-public-api.hoyolab.com/event/luna/hkrpg/os/sign' \
@@ -28,6 +27,8 @@ jobs:
               -H 'x-rpc-signgame: hkrpg' \
               -H "Cookie: $cookie" \
               -d '{"act_id":"e202303301540311","lang":"zh-cn"}')
-            echo "Response: $response"
+            # 只输出状态码，不输出响应正文
+            code=$(echo "$response" | jq -r '.retcode // "unknown"' 2>/dev/null) || code="unknown"
+            echo "account done (retcode=$code)"
             sleep 3
           done

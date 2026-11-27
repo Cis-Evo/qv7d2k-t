@@ -12,7 +12,6 @@ jobs:
           TOKENS: ${{ secrets.STARASK_TOKENS }}
         run: |
           echo "$TOKENS" | jq -r '.[]' | while read -r token; do
-            echo "--- Checking in for account ---"
             response=$(curl -s \
               -X POST \
               'https://api.starask.io/api/checkin' \
@@ -26,6 +25,8 @@ jobs:
               -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Safari/605.1.15' \
               -H 'Content-Length: 0' \
               -H 'Sec-Fetch-Dest: empty')
-            echo "Response: $response"
+            # 只输出状态码，不输出响应正文
+            code=$(echo "$response" | jq -r '.code // .retcode // "unknown"' 2>/dev/null) || code="unknown"
+            echo "account done (code=$code)"
             sleep 3
           done

@@ -14,18 +14,14 @@ jobs:
           COOKIES: ${{ secrets.BILIBILI_COOKIES }}
         run: |
           echo "$COOKIES" | jq -r '.[]' | while read -r cookie; do
-            echo "--- Signing for account ---"
-
             mid=$(echo "$cookie"    | grep -oP 'DedeUserID=\K[^;]+')
             csrf=$(echo "$cookie"   | grep -oP 'bili_jct=\K[^;]+')
             buvid=$(echo "$cookie"  | grep -oP 'buvid3=\K[^;]+')
 
             if [ -z "$mid" ] || [ -z "$csrf" ] || [ -z "$buvid" ]; then
-              echo "ERROR: 缺少必要参数 (mid/csrf/buvid)，跳过此账号"
+              echo "ERROR: 缺少必要参数，跳过此账号"
               continue
             fi
-
-            echo "mid=$mid"
 
             response=$(curl -s \
               -X POST \
@@ -41,12 +37,9 @@ jobs:
               -H 'Sec-Fetch-Site: same-site' \
               -H "Cookie: $cookie")
 
-            echo "Response: $response"
-
-            # 简单判断是否成功
-            code=$(echo "$response" | jq -r '.code // "unknown"')
-            msg=$(echo "$response"  | jq -r '.message // ""')
-            echo "code=$code  msg=$msg"
+            # 只输出状态码，不输出账号 ID 与响应正文
+            code=$(echo "$response" | jq -r '.code // "unknown"' 2>/dev/null) || code="unknown"
+            echo "account done (code=$code)"
 
             sleep 3
           done
